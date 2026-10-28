@@ -1,91 +1,73 @@
--- Melius Hub Script Menu (Client-side)
-local CoreGui = game:GetService("CoreGui")
+-- Melius Hub // Ultimate Universal God-Mode Hub
 local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local UserInputService = game:GetService("UserInputService")
+local CoreGui = game:GetService("CoreGui")
 local localPlayer = Players.LocalPlayer
+local mouse = localPlayer:GetMouse()
 
--- Eğer daha önce açıldıysa eskisini sil
+-- Eski menü varsa temizle
 if CoreGui:FindFirstChild("MeliusHubGui") then
     CoreGui.MeliusHubGui:Destroy()
 end
 
--- Ana GUI Oluşturma
+-- Ana Menü Arayüzü
 local screenGui = Instance.new("ScreenGui")
 screenGui.Name = "MeliusHubGui"
 screenGui.Parent = CoreGui
 
 local mainFrame = Instance.new("Frame")
-mainFrame.Size = UDim2.new(0, 420, 0, 260)
-mainFrame.Position = UDim2.new(0.5, -210, 0.5, -130)
+mainFrame.Size = UDim2.new(0, 450, 0, 380)
+mainFrame.Position = UDim2.new(0.5, -225, 0.5, -190)
 mainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
-mainFrame.Draggable = true -- Ekranın istediğin yerine sürükleyebilirsin
+mainFrame.Draggable = true
 mainFrame.Parent = screenGui
 
--- Köşeleri Yumuşatma
 local uiCorner = Instance.new("UICorner")
-uiCorner.CornerRadius = UDim.new(0, 8)
+uiCorner.CornerRadius = UDim.new(0, 10)
 uiCorner.Parent = mainFrame
 
--- Üst Bar (Başlık)
+-- Üst Bar
 local topBar = Instance.new("Frame")
-topBar.Size = UDim2.new(1, 0, 0, 40)
-topBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+topBar.Size = UDim2.new(1, 0, 0, 45)
+topBar.BackgroundColor3 = Color3.fromRGB(22, 22, 22)
 topBar.BorderSizePixel = 0
 topBar.Parent = mainFrame
 
 local topCorner = Instance.new("UICorner")
-topCorner.CornerRadius = UDim.new(0, 8)
+topCorner.CornerRadius = UDim.new(0, 10)
 topCorner.Parent = topBar
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Size = UDim2.new(1, -20, 1, 0)
-titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.Position = UDim2.new(0, 12, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "MELIUS HUB // v1.0 (Key-Free)"
-titleLabel.TextColor3 = Color3.fromRGB(0, 255, 102) -- Neon Yeşil
-titleLabel.TextSize = 15
+titleLabel.Text = "MELIUS HUB // ULTIMATE GOD-MODE"
+titleLabel.TextColor3 = Color3.fromRGB(0, 255, 102)
+titleLabel.TextSize = 14
 titleLabel.Font = Enum.Font.GothamBold
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 titleLabel.Parent = topBar
 
--- Kapatma Butonu (X)
-local closeBtn = Instance.new("TextButton")
-closeBtn.Size = UDim2.new(0, 30, 0, 30)
-closeBtn.Position = UDim2.new(1, -35, 0, 5)
-closeBtn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-closeBtn.Text = "X"
-closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-closeBtn.TextSize = 14
-closeBtn.Font = Enum.Font.GothamBold
-closeBtn.Parent = topBar
-
-local closeCorner = Instance.new("UICorner")
-closeCorner.CornerRadius = UDim.new(0, 6)
-closeCorner.Parent = closeBtn
-
-closeBtn.MouseButton1Click:Connect(function()
-    screenGui:Destroy()
-end)
-
--- İçerik Alanı (Butonlar)
+-- İçerik Kaydırma Alanı
 local contentFrame = Instance.new("ScrollingFrame")
 contentFrame.Size = UDim2.new(1, -20, 1, -60)
 contentFrame.Position = UDim2.new(0, 10, 0, 50)
 contentFrame.BackgroundTransparency = 1
 contentFrame.BorderSizePixel = 0
-contentFrame.CanvasSize = UDim2.new(0, 0, 0, 200)
+contentFrame.CanvasSize = UDim2.new(0, 0, 0, 480)
 contentFrame.Parent = mainFrame
 
--- Fonksiyon: Menüye Şık Buton Ekleme
 local function createButton(name, posY, callback)
     local btn = Instance.new("TextButton")
     btn.Size = UDim2.new(1, 0, 0, 40)
     btn.Position = UDim2.new(0, 0, 0, posY)
-    btn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+    btn.BackgroundColor3 = Color3.fromRGB(28, 28, 28)
     btn.Text = "  " .. name
     btn.TextColor3 = Color3.fromRGB(255, 255, 255)
-    btn.TextSize = 14
+    btn.TextSize = 13
     btn.Font = Enum.Font.GothamMedium
     btn.TextXAlignment = Enum.TextXAlignment.Left
     btn.Parent = contentFrame
@@ -97,38 +79,135 @@ local function createButton(name, posY, callback)
     btn.MouseButton1Click:Connect(callback)
 end
 
--- 1. Buton: Görünmezlik
-createButton("Görünmezlik (Invisibility)", 0, function()
-    local char = localPlayer.Character
-    if char then
-        for _, v in ipairs(char:GetDescendants()) do
-            if v:IsA("BasePart") or v:IsA("MeshPart") or v:IsA("Decal") then
-                v.Transparency = 1
-            elseif v:IsA("Accessory") then
-                local handle = v:FindFirstChild("Handle")
-                if handle then handle.Transparency = 1 end
+-- 1. Uçma (Fly) Değişkenleri
+local flying = false
+local flySpeed = 50
+
+-- 2. Noclip (Duvarlardan Geçme) Değişkenleri
+local noclipEnabled = false
+RunService.Stepped:Connect(function()
+    if noclipEnabled and localPlayer.Character then
+        for _, part in pairs(localPlayer.Character:GetDescendants()) do
+            if part:IsA("BasePart") then
+                part.CanCollide = false
             end
         end
-        print("MeliusHub: Görünmezlik aktif!")
     end
 end)
 
--- 2. Buton: Hız Hilesi (Speed Boost)
-createButton("Süper Hız (Speed: 50)", 50, function()
+-- --- TÜM HİLE BUTONLARI ---
+
+createButton("🚀 Uçma Modu (Fly - Toggle)", 0, function()
+    flying = not flying
+    local char = localPlayer.Character
+    if not char or not char:FindFirstChild("HumanoidRootPart") then return end
+    local rootPart = char.HumanoidRootPart
+    
+    if flying then
+        print("MeliusHub: Uçma Açıldı!")
+        local bv = Instance.new("BodyVelocity")
+        bv.Name = "MeliusFlyVelocity"
+        bv.Parent = rootPart
+        bv.MaxForce = Vector3.new(9e9, 9e9, 9e9)
+        bv.Velocity = Vector3.new(0, 0, 0)
+        
+        task.spawn(function()
+            while flying do
+                task.wait()
+                local cam = workspace.CurrentCamera
+                local vel = Vector3.new()
+                if UserInputService:IsKeyDown(Enum.KeyCode.W) then
+                    vel = vel + cam.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.S) then
+                    vel = vel - cam.CFrame.LookVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.A) then
+                    vel = vel - cam.CFrame.RightVector
+                end
+                if UserInputService:IsKeyDown(Enum.KeyCode.D) then
+                    vel = vel + cam.CFrame.RightVector
+                end
+                bv.Velocity = vel * flySpeed
+            end
+            if rootPart:FindFirstChild("MeliusFlyVelocity") then
+                rootPart.MeliusFlyVelocity:Destroy()
+            end
+        end)
+    else
+        print("MeliusHub: Uçma Kapatıldı!")
+        if rootPart:FindFirstChild("MeliusFlyVelocity") then
+            rootPart.MeliusFlyVelocity:Destroy()
+        end
+    end
+end)
+
+createButton("👻 Duvarlardan Geçme (Noclip)", 50, function()
+    noclipEnabled = not noclipEnabled
+    print("MeliusHub Noclip: " .. tostring(noclipEnabled))
+end)
+
+createButton("⚡ Süper Hız (WalkSpeed: 120)", 100, function()
     local char = localPlayer.Character
     if char and char:FindFirstChildOfClass("Humanoid") then
-        char:FindFirstChildOfClass("Humanoid").WalkSpeed = 50
-        print("MeliusHub: Hız artırıldı!")
+        char:FindFirstChildOfClass("Humanoid").WalkSpeed = 120
     end
 end)
 
--- 3. Buton: Normal Hıza Dön
-createButton("Normal Hıza Dön", 100, function()
+createButton("🦘 Mega Zıplama (JumpPower: 150)", 150, function()
     local char = localPlayer.Character
     if char and char:FindFirstChildOfClass("Humanoid") then
-        char:FindFirstChildOfClass("Humanoid").WalkSpeed = 16
-        print("MeliusHub: Hız normale döndü.")
+        char:FindFirstChildOfClass("Humanoid").UseJumpPower = true
+        char:FindFirstChildOfClass("Humanoid").JumpPower = 150
     end
 end)
 
-print("Melius Hub başarıyla yüklendi!")
+createButton("👁️ Oyuncu ESP (İsimleri Görme)", 200, function()
+    for _, p in pairs(Players:GetPlayers()) do
+        if p ~= localPlayer and p.Character and p.Character:FindFirstChild("Head") then
+            if not p.Character.Head:FindFirstChild("MeliusESP") then
+                local bg = Instance.new("BillboardGui")
+                bg.Name = "MeliusESP"
+                bg.Size = UDim2.new(0, 100, 0, 40)
+                bg.StudsOffset = Vector3.new(0, 3, 0)
+                bg.AlwaysOnTop = true
+                bg.Parent = p.Character.Head
+                
+                local txt = Instance.new("TextLabel")
+                txt.Size = UDim2.new(1, 0, 1, 0)
+                txt.BackgroundTransparency = 1
+                txt.Text = p.Name
+                txt.TextColor3 = Color3.fromRGB(0, 255, 102)
+                txt.TextSize = 12
+                txt.Font = Enum.Font.GothamBold
+                txt.Parent = bg
+            end
+        end
+    end
+    print("MeliusHub: ESP Aktif Edildi!")
+end)
+
+createButton("💡 Fullbright (Geceyi Gündüz Yap / Işık)", 250, function()
+    local Lighting = game:GetService("Lighting")
+    Lighting.Brightness = 3
+    Lighting.ClockTime = 12
+    Lighting.GlobalShadows = false
+    Lighting.FogEnd = 999999
+end)
+
+createButton("🎯 FOV Changer (Görüş Açısı: 120)", 300, function()
+    workspace.CurrentCamera.FieldOfView = 120
+end)
+
+createButton("🔄 Karakteri Sıfırla (Respawn)", 350, function()
+    local char = localPlayer.Character
+    if char and char:FindFirstChildOfClass("Humanoid") then
+        char:FindFirstChildOfClass("Humanoid").Health = 0
+    end
+end)
+
+createButton("❌ Menüyü Kapat / Gizle", 400, function()
+    screenGui:Destroy()
+end)
+
+print("Melius Hub Ultimate God-Mode Yüklendi!")
